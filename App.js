@@ -1,112 +1,59 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- * @flow strict-local
- */
+import React, { useState, useEffect } from 'react';
+import { SafeAreaView, View, Text, StyleSheet } from 'react-native';
+import messaging from '@react-native-firebase/messaging';
 
-import React from 'react';
-import type {Node} from 'react';
-import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
+export default () => {
+  // Tipos de STATUS:
+  // - feito
+  // - aceito
+  // - enviado
+  // - entregue
+  const [orderStatus, setOrderStatus] = useState('feito');
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+  useEffect(()=>{
+    // Pedindo permissão de notificação
+    const requestNotifPermission = async () => {
+      const authStatus = await messaging().requestPermission();
+      console.log('Permissão', authStatus);
+    }
+    requestNotifPermission();
 
-const Section = ({children, title}): Node => {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-};
+    // Recebendo notificação foreground (app aberto)
+    const unsubscribe = messaging().onMessage(async (remoteMessage) => {
+      console.log('Recebido no FOREGROUND', remoteMessage);
 
-const App: () => Node = () => {
-  const isDarkMode = useColorScheme() === 'dark';
+      if(remoteMessage.data.newStatus) {
+        setOrderStatus(remoteMessage.data.newStatus);
+      }
+    });
 
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-  };
+    return unsubscribe;
+  }, []);
 
   return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.js</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
+    <SafeAreaView style={styles.container}>
+      <Text style={styles.orderTitle}>Pedido 1234</Text>
+      <Text>Status:</Text>
+      <Text style={styles.orderStatusText}>
+        {orderStatus == 'feito' && '#1 Seu pedido foi feito'}
+        {orderStatus == 'aceito' && '#2 Seu pedido está sendo preparado'}
+        {orderStatus == 'enviado' && '#3 Saiu para entrega'}
+        {orderStatus == 'entregue' && '#4 Pedido entregue com sucesso'}
+      </Text>
     </SafeAreaView>
   );
-};
-
+}
 const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
+  container:{
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center'
   },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
+  orderTitle:{
+    fontSize: 20,
+    marginBottom: 20
   },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
-  },
+  orderStatusText:{
+    fontSize: 20
+  }
 });
-
-export default App;
