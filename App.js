@@ -10,6 +10,16 @@ export default () => {
   // - entregue
   const [orderStatus, setOrderStatus] = useState('feito');
 
+  const handleNotifOpen = (remoteMessage) => {
+    if(remoteMessage) {
+      console.log("Abriu o app com: ", remoteMessage);
+      // Abre o aplicativo e muda status do pedido
+      if(remoteMessage.data.newStatus) {
+        setOrderStatus(remoteMessage.data.newStatus);
+      }
+    }
+  }
+
   useEffect(()=>{
     // Pedindo permissão de notificação
     const requestNotifPermission = async () => {
@@ -26,6 +36,12 @@ export default () => {
         setOrderStatus(remoteMessage.data.newStatus);
       }
     });
+
+    // Evento para clique na notificação (em BACKGROUND)
+    messaging().onNotificationOpenedApp(handleNotifOpen);
+
+    // Evento para clique na notificação (com app totalmente FECHADO)
+    messaging().getInitialNotification().then(handleNotifOpen);
 
     return unsubscribe;
   }, []);
